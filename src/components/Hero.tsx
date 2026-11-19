@@ -59,12 +59,15 @@ export default function Hero() {
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
 
-          <Link
-            href="#collections"
-            className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 rounded-md bg-[#101D40]/80 hover:bg-[#101D40] text-[#F5E8C9] hover:text-white border border-[#F5E8C9]/40 hover:border-[#F5E8C9] text-sm sm:text-base font-extrabold tracking-widest uppercase backdrop-blur-sm transition-all duration-200"
+          <button
+            type="button"
+            onClick={() => {
+              document.getElementById('collections')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 rounded-md bg-[#101D40]/80 hover:bg-[#101D40] text-[#F5E8C9] hover:text-white border border-[#F5E8C9]/40 hover:border-[#F5E8C9] text-sm sm:text-base font-extrabold tracking-widest uppercase backdrop-blur-sm transition-all duration-200 cursor-pointer"
           >
             EXPLORE COLLECTIONS
-          </Link>
+          </button>
         </div>
 
         {/* Football Culture Footnote */}

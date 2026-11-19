@@ -52,89 +52,93 @@ export default function CartDrawer() {
                 <p className="text-xs text-slate-400 mb-6">
                   Add your favourite club or national team kit to begin.
                 </p>
-                <button
+                <Link
+                  href="/products"
                   onClick={() => setIsCartOpen(false)}
-                  className="px-6 py-2.5 bg-[#176B43] hover:bg-[#1FA365] text-white font-bold text-xs uppercase tracking-wider rounded-md"
+                  className="px-6 py-2.5 bg-[#176B43] hover:bg-[#1FA365] text-white font-bold text-xs uppercase tracking-wider rounded-md inline-block shadow-md hover:scale-105 transition-all"
                 >
                   Explore Kits
-                </button>
+                </Link>
               </div>
             ) : (
-              items.map((item) => (
-                <div
-                  key={`${item.variantId}_${item.customization?.playerName || ''}_${item.customization?.playerNumber || ''}`}
-                  className="flex gap-4 p-3 rounded-lg bg-[#101D40]/60 border border-[#1E3368]"
-                >
-                  <div className="relative w-20 h-24 rounded overflow-hidden bg-[#090F21] flex-shrink-0">
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.title}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
+              items.map((item) => {
+                const itemKeySuffix = `${item.customization?.playerName || ''}_${item.customization?.playerNumber || ''}_${item.customization?.additionalNotes || ''}`;
+                return (
+                  <div
+                    key={`${item.variantId}_${itemKeySuffix}`}
+                    className="flex gap-4 p-3 rounded-lg bg-[#101D40]/60 border border-[#1E3368]"
+                  >
+                    <div className="relative w-20 h-24 rounded overflow-hidden bg-[#090F21] flex-shrink-0">
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
 
-                  <div className="flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className="text-xs font-bold uppercase text-white line-clamp-1">
-                          {item.title}
-                        </h4>
-                        <button
-                          onClick={() => removeItem(item.variantId)}
-                          className="text-slate-400 hover:text-red-400 p-1"
-                          aria-label="Remove item"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
-                        <span className="font-bold text-[#F5E8C9]">Size: {item.size}</span>
-                        <span>•</span>
-                        <span>{item.editionType}</span>
-                      </div>
-
-                      {/* Customization Details preview */}
-                      {item.customization?.playerName && (
-                        <div className="mt-1.5 p-1.5 bg-[#090F21] rounded text-[10px] text-[#F5E8C9] border border-[#1E3368]/60">
-                          <span className="font-bold">Custom:</span> #{item.customization.playerNumber || ''} {item.customization.playerName}
-                          {item.customization.sleevePatch && (
-                            <span className="block text-slate-400">Patch: {item.customization.sleevePatch}</span>
-                          )}
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <h4 className="text-xs font-bold uppercase text-white line-clamp-1">
+                            {item.title}
+                          </h4>
+                          <button
+                            onClick={() => removeItem(item.variantId, itemKeySuffix)}
+                            className="text-slate-400 hover:text-red-400 p-1"
+                            aria-label="Remove item"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                      )}
-                    </div>
 
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center border border-[#1E3368] rounded bg-[#090F21]">
-                        <button
-                          onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
-                          className="px-2 py-0.5 text-xs text-slate-300 hover:text-white"
-                        >
-                          -
-                        </button>
-                        <span className="px-2 py-0.5 text-xs font-bold text-white">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
-                          className="px-2 py-0.5 text-xs text-slate-300 hover:text-white"
-                        >
-                          +
-                        </button>
+                        <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
+                          <span className="font-bold text-[#F5E8C9]">Size: {item.size}</span>
+                          <span>•</span>
+                          <span>{item.editionType}</span>
+                        </div>
+
+                        {/* Customization Details preview */}
+                        {item.customization?.playerName && (
+                          <div className="mt-1.5 p-1.5 bg-[#090F21] rounded text-[10px] text-[#F5E8C9] border border-[#1E3368]/60">
+                            <span className="font-bold">Custom:</span> #{item.customization.playerNumber || ''} {item.customization.playerName}
+                            {item.customization.sleevePatch && (
+                              <span className="block text-slate-400">Patch: {item.customization.sleevePatch}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
-                      <span className="text-xs font-black text-[#F5E8C9]">
-                        {formatBDT(
-                          (item.unitPriceMinor + (item.customization?.customizationFeeMinor || 0)) *
-                            item.quantity
-                        )}
-                      </span>
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex items-center border border-[#1E3368] rounded bg-[#090F21]">
+                          <button
+                            onClick={() => updateQuantity(item.variantId, item.quantity - 1, itemKeySuffix)}
+                            className="px-2 py-0.5 text-xs text-slate-300 hover:text-white"
+                          >
+                            -
+                          </button>
+                          <span className="px-2 py-0.5 text-xs font-bold text-white">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.variantId, item.quantity + 1, itemKeySuffix)}
+                            className="px-2 py-0.5 text-xs text-slate-300 hover:text-white"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <span className="text-xs font-black text-[#F5E8C9]">
+                          {formatBDT(
+                            (item.unitPriceMinor + (item.customization?.customizationFeeMinor || 0)) *
+                              item.quantity
+                          )}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 

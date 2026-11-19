@@ -283,6 +283,19 @@ export function createNewOrder(orderData: {
 
   const updated = [newOrder, ...orders];
   saveStoredOrders(updated);
+
+  // Background sync with remote API if configured
+  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+    fetch(`${apiBase}/api/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newOrder),
+    }).catch(() => {
+      // Local in-memory/localStorage fallback active
+    });
+  }
+
   return newOrder;
 }
 

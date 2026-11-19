@@ -1,12 +1,13 @@
 'use client';
 
 import React, { Suspense, useState, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Filter, SlidersHorizontal, Search, X, Sparkles } from 'lucide-react';
 import { PRODUCTS, CATEGORIES, COLLECTIONS } from '@/lib/data';
 import ProductCard from '@/components/ProductCard';
 
 function ProductsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get('category') || 'all';
   const initialCollection = searchParams.get('collection') || 'all';
@@ -16,6 +17,7 @@ function ProductsContent() {
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedCollection, setSelectedCollection] = useState(initialCollection);
   const [selectedEdition, setSelectedEdition] = useState('all');
+  const [activeFilter, setActiveFilter] = useState(initialFilter);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'newest'>('featured');
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
@@ -23,10 +25,18 @@ function ProductsContent() {
   // Filter products
   const filteredProducts = useMemo(() => {
     return PRODUCTS.filter((product) => {
-      // Category filter
+      // Category filter (support virtual/tag categories like fan-editions, custom-jerseys)
       if (selectedCategory !== 'all') {
-        const cat = CATEGORIES.find((c) => c.slug === selectedCategory);
-        if (cat && product.categoryId !== cat.id) return false;
+        if (selectedCategory === 'fan-editions') {
+          if (product.editionType !== 'Fan Edition' && product.categoryId !== 'cat-3') return false;
+        } else if (selectedCategory === 'player-editions') {
+          if (product.editionType !== 'Player Edition' && product.categoryId !== 'cat-4') return false;
+        } else if (selectedCategory === 'custom-jerseys') {
+          if (!product.allowsCustomization && product.categoryId !== 'cat-5') return false;
+        } else {
+          const cat = CATEGORIES.find((c) => c.slug === selectedCategory);
+          if (cat && product.categoryId !== cat.id) return false;
+        }
       }
 
       // Collection filter
@@ -35,8 +45,14 @@ function ProductsContent() {
         if (col && product.collectionId !== col.id) return false;
       }
 
-      // Special 'new' filter
-      if (initialFilter === 'new' && !product.isNewArrival) {
+      // Special 'filter' query param (new, bestseller, featured)
+      if (activeFilter === 'new' && !product.isNewArrival) {
+        return false;
+      }
+      if (activeFilter === 'bestseller' && !product.isBestseller) {
+        return false;
+      }
+      if (activeFilter === 'featured' && !product.isFeatured) {
         return false;
       }
 
@@ -68,20 +84,23 @@ function ProductsContent() {
       if (sortBy === 'newest') return (b.isNewArrival ? 1 : 0) - (a.isNewArrival ? 1 : 0);
       return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0);
     });
-  }, [selectedCategory, selectedCollection, selectedEdition, searchQuery, sortBy, initialFilter]);
+  }, [selectedCategory, selectedCollection, selectedEdition, searchQuery, sortBy, activeFilter]);
 
   const hasActiveFilters =
     selectedCategory !== 'all' ||
     selectedCollection !== 'all' ||
     selectedEdition !== 'all' ||
+    activeFilter !== 'all' ||
     searchQuery.trim() !== '';
 
   const clearAllFilters = () => {
     setSelectedCategory('all');
     setSelectedCollection('all');
     setSelectedEdition('all');
+    setActiveFilter('all');
     setSearchQuery('');
     setSortBy('featured');
+    router.push('/products');
   };
 
   return (

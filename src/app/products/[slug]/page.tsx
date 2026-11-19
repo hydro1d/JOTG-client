@@ -70,6 +70,11 @@ export default function ProductDetailPage({
   const currentImage = product.images[selectedImageIndex]?.imageUrl || product.images[0]?.imageUrl || '';
   const relatedKits = getRelatedProducts(product.id, 4);
 
+  const handleOpenSizeGuide = () => {
+    setActiveTab('sizing');
+    document.getElementById('product-specs-tabs')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const handleAddToCart = () => {
     if (!selectedVariant || !inStock) return;
 
@@ -83,9 +88,9 @@ export default function ProductDetailPage({
       editionType: product.editionType,
       unitPriceMinor: basePriceMinor,
       quantity,
-      customization: enableCustomization && customName.trim()
+      customization: enableCustomization
         ? {
-            playerName: customName.toUpperCase().trim(),
+            playerName: customName.toUpperCase().trim() || undefined,
             playerNumber: customNumber.trim() || undefined,
             sleevePatch: customPatch !== 'None' ? customPatch : undefined,
             customizationFeeMinor,
@@ -213,8 +218,8 @@ export default function ProductDetailPage({
                     Select Size
                   </label>
                   <button
-                    onClick={() => setActiveTab('sizing')}
-                    className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
+                    onClick={handleOpenSizeGuide}
+                    className="text-xs text-[#F5E8C9] hover:text-white flex items-center gap-1 underline underline-offset-4 cursor-pointer"
                   >
                     <Ruler className="w-3.5 h-3.5" />
                     <span>Size Guide</span>
@@ -269,22 +274,21 @@ export default function ProductDetailPage({
               {/* Official Custom Printing Studio Accordion / Toggle */}
               {product.allowsCustomization && (
                 <div className="mt-6 p-4 rounded-xl bg-[#101D40] border border-[#1E3368]">
-                  <div className="flex items-center justify-between">
+                  <div
+                    onClick={() => setEnableCustomization(!enableCustomization)}
+                    className="flex items-center justify-between cursor-pointer select-none"
+                  >
                     <div className="flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-[#F5E8C9]" />
                       <span className="text-xs font-bold uppercase tracking-wider text-white">
                         CUSTOM PLAYER PRINTING (+{formatBDT(product.customizationFeeMinor || 20000)})
                       </span>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={enableCustomization}
-                        onChange={(e) => setEnableCustomization(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#176B43]"></div>
-                    </label>
+                    <div className="relative inline-flex items-center">
+                      <div className={`w-9 h-5 rounded-full transition-colors ${enableCustomization ? 'bg-[#176B43]' : 'bg-slate-700'}`}>
+                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${enableCustomization ? 'translate-x-4' : 'translate-x-0.5'} mt-0.5 ml-0.5`}></div>
+                      </div>
+                    </div>
                   </div>
 
                   {enableCustomization && (
@@ -425,7 +429,7 @@ export default function ProductDetailPage({
         </div>
 
         {/* Tabbed Info Section (Details, Sizing, Care) */}
-        <div className="mt-16 bg-[#101D40]/50 rounded-2xl border border-[#1E3368] p-6 sm:p-8">
+        <div id="product-specs-tabs" className="mt-16 bg-[#101D40]/50 rounded-2xl border border-[#1E3368] p-6 sm:p-8 scroll-mt-24">
           <div className="flex border-b border-[#1E3368] gap-8">
             <button
               onClick={() => setActiveTab('details')}

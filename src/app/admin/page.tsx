@@ -20,6 +20,11 @@ import {
   Truck,
   Check,
   AlertTriangle,
+  Lock,
+  LogOut,
+  Eye,
+  EyeOff,
+  Key,
 } from 'lucide-react';
 import {
   INITIAL_ORDERS,
@@ -36,10 +41,60 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
   const [mounted, setMounted] = useState(false);
 
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState('');
+
   useEffect(() => {
+    try {
+      const isAuth =
+        sessionStorage.getItem('jotg_admin_auth') === 'true' ||
+        localStorage.getItem('jotg_admin_auth') === 'true';
+      setIsAuthenticated(isAuth);
+    } catch {
+      // Ignore storage errors
+    }
     setOrders(getStoredOrders());
     setMounted(true);
   }, []);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+
+    const validEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@jerseyonthego.com').toLowerCase().trim();
+    const validPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'jotg@dmin2026';
+
+    if (adminEmail.toLowerCase().trim() === validEmail && adminPassword === validPassword) {
+      setIsAuthenticated(true);
+      try {
+        sessionStorage.setItem('jotg_admin_auth', 'true');
+        localStorage.setItem('jotg_admin_auth', 'true');
+      } catch {
+        // Ignore storage errors
+      }
+    } else {
+      setLoginError('Invalid secret credentials. Access denied to Staff Atelier.');
+    }
+  };
+
+  const handleDemoLogin = () => {
+    setAdminEmail('admin@jerseyonthego.com');
+    setAdminPassword('jotg@dmin2026');
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    try {
+      sessionStorage.removeItem('jotg_admin_auth');
+      localStorage.removeItem('jotg_admin_auth');
+    } catch {
+      // Ignore storage errors
+    }
+  };
   const [activeTab, setActiveTab] = useState<'orders' | 'verification' | 'inventory' | 'settings'>('orders');
 
   // Filter states
@@ -151,6 +206,130 @@ export default function AdminPage() {
     (o) => o.paymentStatus === 'verification_pending'
   );
 
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[#090F21] flex flex-col items-center justify-center text-center px-4">
+        <div className="w-10 h-10 border-2 border-[#176B43] border-t-[#F5E8C9] rounded-full animate-spin mb-4"></div>
+        <p className="text-xs font-bold uppercase tracking-widest text-[#F5E8C9]">
+          INITIALIZING STAFF ATELIER...
+        </p>
+      </div>
+    );
+  }
+
+  // LOGIN SCREEN GATE FOR UNAUTHENTICATED USERS
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#090F21] flex items-center justify-center py-16 px-4 relative overflow-hidden">
+        {/* Background tactical pattern */}
+        <div className="absolute inset-0 pitch-grid opacity-15 pointer-events-none"></div>
+        <div className="absolute inset-0 stadium-glow opacity-30 pointer-events-none"></div>
+
+        <div className="w-full max-w-md bg-[#101D40] border border-[#1E3368] rounded-2xl p-6 sm:p-8 shadow-2xl relative z-10 space-y-6">
+          <div className="text-center">
+            <div className="w-14 h-14 rounded-2xl bg-[#15244E] border border-[#1E3368] flex items-center justify-center mx-auto mb-4 text-[#F5E8C9] shadow-lg">
+              <Lock className="w-7 h-7 text-[#176B43]" />
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#176B43]/20 border border-[#176B43]/40 text-[10px] font-black uppercase tracking-widest text-[#F5E8C9] mb-2">
+              <Key className="w-3.5 h-3.5 text-[#176B43]" />
+              <span>STAFF ATELIER ACCESS</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black uppercase text-white tracking-tight">
+              ADMIN <span className="text-[#F5E8C9]">AUTHENTICATION</span>
+            </h1>
+            <p className="text-xs text-slate-400 mt-1.5">
+              Authorized personnel only. Please sign in with your secret administrator credentials.
+            </p>
+          </div>
+
+          {loginError && (
+            <div className="p-3.5 rounded-xl bg-red-950/70 border border-red-700/60 text-xs text-red-200 flex items-center gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
+              <span>{loginError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#F5E8C9] mb-1.5">
+                Secret Admin Email
+              </label>
+              <input
+                type="email"
+                required
+                value={adminEmail}
+                onChange={(e) => {
+                  setAdminEmail(e.target.value);
+                  setLoginError('');
+                }}
+                placeholder="admin@jerseyonthego.com"
+                className="w-full bg-[#090F21] border border-[#1E3368] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#F5E8C9]"
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#F5E8C9] mb-1.5">
+                Secret Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={adminPassword}
+                  onChange={(e) => {
+                    setAdminPassword(e.target.value);
+                    setLoginError('');
+                  }}
+                  placeholder="••••••••••••"
+                  className="w-full bg-[#090F21] border border-[#1E3368] rounded-xl pl-4 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#F5E8C9]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3.5 rounded-xl bg-[#176B43] hover:bg-[#1FA365] text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-[#176B43]/30 transition-all hover:scale-[1.01] flex items-center justify-center gap-2 mt-2"
+            >
+              <Lock className="w-4 h-4" />
+              <span>UNLOCK STAFF ATELIER</span>
+            </button>
+          </form>
+
+          {/* Quick Demo Access Helper */}
+          <div className="pt-4 border-t border-[#1E3368]/60 text-center">
+            <span className="text-[11px] text-slate-400 block mb-2">
+              Default Credentials: <code className="text-[#F5E8C9]">admin@jerseyonthego.com</code> / <code className="text-[#F5E8C9]">jotg@dmin2026</code>
+            </span>
+            <button
+              type="button"
+              onClick={handleDemoLogin}
+              className="text-xs font-bold uppercase tracking-wider text-[#176B43] hover:text-[#1FA365] underline"
+            >
+              Fill Default Admin Credentials
+            </button>
+          </div>
+
+          <div className="text-center pt-2">
+            <Link
+              href="/"
+              className="text-xs text-slate-400 hover:text-white transition-colors"
+            >
+              ← Return to Matchday Storefront
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#090F21] py-10 sm:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -159,14 +338,14 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#F5E8C9] mb-1">
               <ShieldCheck className="w-4 h-4 text-[#176B43]" />
-              <span>STAFF ATELIER & BACKOFFICE</span>
+              <span>STAFF ATELIER & BACKOFFICE (AUTHENTICATED)</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white">
               ORDER & PAYMENT <span className="text-[#F5E8C9]">MANAGEMENT</span>
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center flex-wrap gap-2.5">
             <button
               onClick={refreshData}
               className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#101D40] text-xs font-bold uppercase text-slate-300 hover:text-white border border-[#1E3368] transition-colors"
@@ -181,6 +360,14 @@ export default function AdminPage() {
               <ExternalLink className="w-3.5 h-3.5" />
               <span>View Storefront</span>
             </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-950/70 hover:bg-red-900 border border-red-800 text-red-300 hover:text-white text-xs font-black uppercase transition-colors"
+              title="Lock atelier and sign out"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Lock Atelier</span>
+            </button>
           </div>
         </div>
 
