@@ -47,48 +47,76 @@ export default function AdminPage() {
   const [adminPassword, setAdminPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
-    try {
-      const isAuth =
-        sessionStorage.getItem('jotg_admin_auth') === 'true' ||
-        localStorage.getItem('jotg_admin_auth') === 'true';
-      setIsAuthenticated(isAuth);
-    } catch {
-      // Ignore storage errors
-    }
-    setOrders(getStoredOrders());
-    setMounted(true);
+    const checkSession = async () => {
+      try {
+        const token = sessionStorage.getItem('jotg_admin_token') || localStorage.getItem('jotg_admin_token');
+        if (token) {
+          const res = await fetch('/api/admin/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+          });
+          const data = await res.json();
+          if (res.ok && data.valid) {
+            setIsAuthenticated(true);
+          } else {
+            sessionStorage.removeItem('jotg_admin_token');
+            localStorage.removeItem('jotg_admin_token');
+            setIsAuthenticated(false);
+          }
+        }
+      } catch {
+        // Fallback for offline or temporary network issues
+        const token = sessionStorage.getItem('jotg_admin_token');
+        if (token) setIsAuthenticated(true);
+      }
+      setOrders(getStoredOrders());
+      setMounted(true);
+    };
+
+    checkSession();
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
+    setIsLoggingIn(true);
 
-    const validEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@jerseyonthego.com').toLowerCase().trim();
-    const validPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'jotg@dmin2026';
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: adminEmail.trim(),
+          password: adminPassword,
+        }),
+      });
 
-    if (adminEmail.toLowerCase().trim() === validEmail && adminPassword === validPassword) {
-      setIsAuthenticated(true);
-      try {
-        sessionStorage.setItem('jotg_admin_auth', 'true');
-        localStorage.setItem('jotg_admin_auth', 'true');
-      } catch {
-        // Ignore storage errors
+      const data = await res.json();
+
+      if (res.ok && data.success && data.token) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem('jotg_admin_token', data.token);
+        localStorage.setItem('jotg_admin_token', data.token);
+        setAdminPassword('');
+      } else {
+        setLoginError(data.error || 'Invalid administrator email or password.');
       }
-    } else {
-      setLoginError('Invalid secret credentials. Access denied to Staff Atelier.');
+    } catch {
+      setLoginError('Authentication service unreachable. Please try again.');
+    } finally {
+      setIsLoggingIn(false);
     }
-  };
-
-  const handleDemoLogin = () => {
-    setAdminEmail('admin@jerseyonthego.com');
-    setAdminPassword('jotg@dmin2026');
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     try {
+      sessionStorage.removeItem('jotg_admin_token');
+      localStorage.removeItem('jotg_admin_token');
       sessionStorage.removeItem('jotg_admin_auth');
       localStorage.removeItem('jotg_admin_auth');
     } catch {
@@ -252,7 +280,7 @@ export default function AdminPage() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-[#F5E8C9] mb-1.5">
-                Secret Admin Email
+                Staff Email
               </label>
               <input
                 type="email"
@@ -262,7 +290,7 @@ export default function AdminPage() {
                   setAdminEmail(e.target.value);
                   setLoginError('');
                 }}
-                placeholder="admin@jerseyonthego.com"
+                placeholder="Enter authorized email..."
                 className="w-full bg-[#090F21] border border-[#1E3368] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#F5E8C9]"
                 autoFocus
               />
@@ -270,7 +298,7 @@ export default function AdminPage() {
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-[#F5E8C9] mb-1.5">
-                Secret Password
+                Staff Passcode
               </label>
               <div className="relative">
                 <input
@@ -281,7 +309,7 @@ export default function AdminPage() {
                     setAdminPassword(e.target.value);
                     setLoginError('');
                   }}
-                  placeholder="••••••••••••"
+                  placeholder="Enter secret passcode..."
                   className="w-full bg-[#090F21] border border-[#1E3368] rounded-xl pl-4 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#F5E8C9]"
                 />
                 <button
@@ -296,26 +324,13 @@ export default function AdminPage() {
 
             <button
               type="submit"
-              className="w-full py-3.5 rounded-xl bg-[#176B43] hover:bg-[#1FA365] text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-[#176B43]/30 transition-all hover:scale-[1.01] flex items-center justify-center gap-2 mt-2"
+              disabled={isLoggingIn}
+              className="w-full py-3.5 rounded-xl bg-[#176B43] hover:bg-[#1FA365] disabled:bg-slate-700 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-[#176B43]/30 transition-all hover:scale-[1.01] flex items-center justify-center gap-2 mt-2"
             >
               <Lock className="w-4 h-4" />
-              <span>UNLOCK STAFF ATELIER</span>
+              <span>{isLoggingIn ? 'AUTHENTICATING...' : 'UNLOCK STAFF ATELIER'}</span>
             </button>
           </form>
-
-          {/* Quick Demo Access Helper */}
-          <div className="pt-4 border-t border-[#1E3368]/60 text-center">
-            <span className="text-[11px] text-slate-400 block mb-2">
-              Default Credentials: <code className="text-[#F5E8C9]">admin@jerseyonthego.com</code> / <code className="text-[#F5E8C9]">jotg@dmin2026</code>
-            </span>
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              className="text-xs font-bold uppercase tracking-wider text-[#176B43] hover:text-[#1FA365] underline"
-            >
-              Fill Default Admin Credentials
-            </button>
-          </div>
 
           <div className="text-center pt-2">
             <Link
