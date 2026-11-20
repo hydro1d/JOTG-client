@@ -1,13 +1,23 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Flame } from 'lucide-react';
 import { PRODUCTS } from '@/lib/data';
+import { getStoredProducts } from '@/lib/api';
 import ProductCard from './ProductCard';
 
 export default function LatestDrop() {
-  const newProducts = PRODUCTS.filter((p) => p.isNewArrival).slice(0, 4);
+  const [products, setProducts] = useState(PRODUCTS);
+
+  useEffect(() => {
+    setProducts(getStoredProducts());
+    const onUpdate = () => setProducts(getStoredProducts());
+    window.addEventListener('jotg_products_updated', onUpdate);
+    return () => window.removeEventListener('jotg_products_updated', onUpdate);
+  }, []);
+
+  const newProducts = products.filter((p) => p.isNewArrival && p.isActive !== false).slice(0, 4);
 
   return (
     <section className="py-20 bg-[#090F21] relative">

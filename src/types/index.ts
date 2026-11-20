@@ -53,7 +53,7 @@ export interface Product {
   season?: string;
   editionType: EditionType;
   regularPriceMinor: number;
-  salePriceMinor?: number;
+  salePriceMinor?: number | null;
   sku: string;
   isFeatured: boolean;
   isBestseller: boolean;
@@ -163,4 +163,40 @@ export interface PaymentRecord {
   verifiedAt?: string;
   adminNotes?: string;
   createdAt: string;
+}
+
+export interface StoreSettings {
+  announcement?: {
+    text: string;
+    enabled: boolean;
+  };
+  payment_methods?: {
+    bkash: {
+      enabled: boolean;
+      account_number: string;
+      account_type: string;
+      instructions: string;
+    };
+    nagad: {
+      enabled: boolean;
+      account_number: string;
+      account_type: string;
+      instructions: string;
+    };
+    cod: {
+      enabled: boolean;
+      instructions: string;
+    };
+  };
+  shipping?: {
+    dhaka_rate_minor: number;
+    nationwide_rate_minor: number;
+  };
+  contact?: {
+    phone: string;
+    whatsapp: string;
+    email: string;
+    location: string;
+    hours: string;
+  };
 }

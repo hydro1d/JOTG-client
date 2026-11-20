@@ -373,27 +373,46 @@ export const PRODUCTS: Product[] = [
   },
 ];
 
+export function getCurrentProducts(): Product[] {
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('jotg_custom_products');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // fallback
+    }
+  }
+  return PRODUCTS;
+}
+
 export function getProductBySlug(slug: string): Product | undefined {
-  return PRODUCTS.find((p) => p.slug === slug);
+  const all = getCurrentProducts();
+  return all.find((p) => p.slug.toLowerCase() === slug.toLowerCase().trim());
 }
 
 export function getProductsByCategory(categorySlug: string): Product[] {
+  const all = getCurrentProducts();
   const category = CATEGORIES.find((c) => c.slug === categorySlug);
   if (!category) return [];
-  return PRODUCTS.filter((p) => p.categoryId === category.id);
+  return all.filter((p) => p.categoryId === category.id);
 }
 
 export function getProductsByCollection(collectionSlug: string): Product[] {
+  const all = getCurrentProducts();
   const collection = COLLECTIONS.find((c) => c.slug === collectionSlug);
   if (!collection) return [];
-  return PRODUCTS.filter((p) => p.collectionId === collection.id);
+  return all.filter((p) => p.collectionId === collection.id);
 }
 
 export function getRelatedProducts(productId: string, limit = 4): Product[] {
-  const current = PRODUCTS.find((p) => p.id === productId);
-  if (!current) return PRODUCTS.slice(0, limit);
+  const all = getCurrentProducts();
+  const current = all.find((p) => p.id === productId);
+  if (!current) return all.slice(0, limit);
 
-  return PRODUCTS
+  return all
     .filter((p) => p.id !== productId && (p.categoryId === current.categoryId || p.collectionId === current.collectionId))
     .slice(0, limit);
 }

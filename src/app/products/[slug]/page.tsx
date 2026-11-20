@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, use } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
@@ -14,8 +14,11 @@ import {
   ChevronRight,
   Info,
   Ruler,
+  Loader2,
 } from 'lucide-react';
 import { getProductBySlug, getRelatedProducts } from '@/lib/data';
+import { getProductBySlugApi } from '@/lib/api';
+import { Product } from '@/types';
 import { formatBDT } from '@/lib/currency';
 import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/ProductCard';
@@ -26,7 +29,26 @@ export default function ProductDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const resolvedParams = use(params);
-  const product = getProductBySlug(resolvedParams.slug);
+  const [product, setProduct] = useState<Product | undefined>(() => getProductBySlug(resolvedParams.slug));
+  const [loading, setLoading] = useState<boolean>(!product);
+
+  useEffect(() => {
+    if (!product) {
+      getProductBySlugApi(resolvedParams.slug).then((res) => {
+        if (res) setProduct(res);
+        setLoading(false);
+      });
+    }
+  }, [resolvedParams.slug, product]);
+
+  if (loading) {
+    return (
+      <div className="min-h-[70vh] bg-[#090F21] flex flex-col items-center justify-center text-center px-4">
+        <Loader2 className="w-8 h-8 text-[#176B43] animate-spin mb-4" />
+        <p className="text-slate-400 text-sm uppercase tracking-widest font-mono">Loading Kit Specifications...</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (

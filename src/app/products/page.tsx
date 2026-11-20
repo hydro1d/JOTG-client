@@ -1,9 +1,11 @@
 'use client';
 
-import React, { Suspense, useState, useMemo } from 'react';
+import React, { Suspense, useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Filter, SlidersHorizontal, Search, X, Sparkles } from 'lucide-react';
 import { PRODUCTS, CATEGORIES, COLLECTIONS } from '@/lib/data';
+import { getStoredProducts, getProductsApi } from '@/lib/api';
+import { Product } from '@/types';
 import ProductCard from '@/components/ProductCard';
 
 function ProductsContent() {
@@ -14,6 +16,7 @@ function ProductsContent() {
   const initialFilter = searchParams.get('filter') || 'all';
   const initialSearch = searchParams.get('search') || '';
 
+  const [productsList, setProductsList] = useState<Product[]>(PRODUCTS);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedCollection, setSelectedCollection] = useState(initialCollection);
   const [selectedEdition, setSelectedEdition] = useState('all');
@@ -22,9 +25,23 @@ function ProductsContent() {
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'newest'>('featured');
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
+  useEffect(() => {
+    setProductsList(getStoredProducts());
+    getProductsApi().then((items) => {
+      if (items && items.length > 0) setProductsList(items);
+    });
+
+    const handleUpdate = () => {
+      setProductsList(getStoredProducts());
+    };
+    window.addEventListener('jotg_products_updated', handleUpdate);
+    return () => window.removeEventListener('jotg_products_updated', handleUpdate);
+  }, []);
+
   // Filter products
   const filteredProducts = useMemo(() => {
-    return PRODUCTS.filter((product) => {
+    return productsList.filter((product) => {
+      if (product.isActive === false) return false;
       // Category filter (support virtual/tag categories like fan-editions, custom-jerseys)
       if (selectedCategory !== 'all') {
         if (selectedCategory === 'fan-editions') {
@@ -84,7 +101,7 @@ function ProductsContent() {
       if (sortBy === 'newest') return (b.isNewArrival ? 1 : 0) - (a.isNewArrival ? 1 : 0);
       return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0);
     });
-  }, [selectedCategory, selectedCollection, selectedEdition, searchQuery, sortBy, activeFilter]);
+  }, [productsList, selectedCategory, selectedCollection, selectedEdition, searchQuery, sortBy, activeFilter]);
 
   const hasActiveFilters =
     selectedCategory !== 'all' ||
