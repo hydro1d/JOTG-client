@@ -1,12 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, ShoppingBag, Check } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { formatBDT } from '@/lib/currency';
 import { PRODUCTS } from '@/lib/data';
+import gsap from 'gsap';
+import { animateSectionReveal } from '@/lib/animations';
 
 export default function CustomJerseyFeature() {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      animateSectionReveal(sectionRef.current);
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   const { addItem } = useCart();
   // Find a product that allows customization, e.g. Real Madrid or Argentina
   const customizableProduct = PRODUCTS.find((p) => p.allowsCustomization) || PRODUCTS[0];
@@ -47,7 +59,7 @@ export default function CustomJerseyFeature() {
   };
 
   return (
-    <section className="py-20 bg-[#101D40] border-t border-[#1E3368] relative overflow-hidden">
+    <section ref={sectionRef} className="py-20 bg-[#101D40] border-t border-[#1E3368] relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#176B43]/30 border border-[#176B43] text-xs font-bold uppercase tracking-widest text-[#F5E8C9] mb-3">

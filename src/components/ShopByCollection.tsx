@@ -1,14 +1,47 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowUpRight } from 'lucide-react';
 import { COLLECTIONS } from '@/lib/data';
+import gsap from 'gsap';
+import { animateSectionReveal } from '@/lib/animations';
 
 export default function ShopByCollection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      animateSectionReveal(sectionRef.current);
+      if (gridRef.current) {
+        const cards = gridRef.current.querySelectorAll('[data-collection-card]');
+        gsap.fromTo(
+          cards,
+          { y: 30, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.7,
+            stagger: 0.1,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: gridRef.current,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+              once: true,
+            },
+          }
+        );
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section id="collections" className="py-20 bg-[#101D40] border-t border-[#1E3368]">
+    <section ref={sectionRef} id="collections" className="py-20 bg-[#101D40] border-t border-[#1E3368]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <span className="text-xs font-bold uppercase tracking-widest text-[#176B43]">
@@ -23,12 +56,13 @@ export default function ShopByCollection() {
         </div>
 
         {/* Dynamic Bento-style Collection Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {COLLECTIONS.map((col, index) => (
             <Link
               key={col.id}
               href={`/products?collection=${col.slug}`}
-              className={`group relative rounded-2xl overflow-hidden card-stadium min-h-[320px] sm:min-h-[380px] flex flex-col justify-end p-6 sm:p-8 ${
+              data-collection-card
+              className={`group relative rounded-2xl overflow-hidden card-stadium min-h-[320px] sm:min-h-[380px] flex flex-col justify-end p-6 sm:p-8 transition-transform duration-300 hover:-translate-y-1 ${
                 index === 0 ? 'md:col-span-2' : ''
               }`}
             >

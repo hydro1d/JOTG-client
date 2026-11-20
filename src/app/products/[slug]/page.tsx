@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect, useRef, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
@@ -21,6 +21,7 @@ import { getProductBySlugApi } from '@/lib/api';
 import { Product } from '@/types';
 import { formatBDT } from '@/lib/currency';
 import { useCart } from '@/context/CartContext';
+import { animateAddToCartSuccess } from '@/lib/animations';
 import ProductCard from '@/components/ProductCard';
 
 export default function ProductDetailPage({
@@ -68,6 +69,7 @@ export default function ProductDetailPage({
   }
 
   const { addItem } = useCart();
+  const addToBagBtnRef = useRef<HTMLButtonElement>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>(product.variants[0]?.size || 'M');
   const [quantity, setQuantity] = useState(1);
@@ -120,6 +122,7 @@ export default function ProductDetailPage({
         : undefined,
     });
 
+    animateAddToCartSuccess(addToBagBtnRef.current);
     setAdded(true);
     setTimeout(() => setAdded(false), 2500);
   };
@@ -402,6 +405,7 @@ export default function ProductDetailPage({
                 </div>
 
                 <button
+                  ref={addToBagBtnRef}
                   onClick={handleAddToCart}
                   disabled={!inStock}
                   className={`w-full py-4 rounded-xl font-black text-xs sm:text-sm uppercase tracking-widest flex items-center justify-center gap-3 transition-all ${

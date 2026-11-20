@@ -1,12 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Mail, CheckCircle2, AlertCircle } from 'lucide-react';
+import gsap from 'gsap';
+import { animateSectionReveal } from '@/lib/animations';
 
 export default function Newsletter() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      animateSectionReveal(sectionRef.current);
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +52,7 @@ export default function Newsletter() {
   };
 
   return (
-    <section className="py-20 bg-[#101D40] border-t border-[#1E3368] relative overflow-hidden">
+    <section ref={sectionRef} className="py-20 bg-[#101D40] border-t border-[#1E3368] relative overflow-hidden">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
         <div className="w-12 h-12 rounded-full bg-[#15244E] border border-[#1E3368] flex items-center justify-center mx-auto mb-4 text-[#F5E8C9]">
           <Mail className="w-6 h-6 text-[#176B43]" />

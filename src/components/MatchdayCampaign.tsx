@@ -1,13 +1,25 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Trophy } from 'lucide-react';
+import gsap from 'gsap';
+import { animateSectionReveal } from '@/lib/animations';
 
 export default function MatchdayCampaign() {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      animateSectionReveal(sectionRef.current);
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section className="relative py-28 overflow-hidden bg-[#090F21] border-y border-[#1E3368]">
+    <section ref={sectionRef} className="relative py-28 overflow-hidden bg-[#090F21] border-y border-[#1E3368]">
       {/* Stadium Floodlight Backdrop */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -40,7 +52,7 @@ export default function MatchdayCampaign() {
           <div className="mt-8">
             <Link
               href="/products"
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-md bg-[#176B43] hover:bg-[#1FA365] text-white text-sm font-extrabold uppercase tracking-widest shadow-xl shadow-[#176B43]/30 hover:scale-105 transition-all group"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-md bg-[#176B43] hover:bg-[#1FA365] text-white text-sm font-extrabold uppercase tracking-widest shadow-xl shadow-[#176B43]/30 hover:scale-105 active:scale-95 transition-all group"
             >
               <span>FIND YOUR JERSEY</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

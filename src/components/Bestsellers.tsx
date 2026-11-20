@@ -1,14 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Trophy } from 'lucide-react';
 import { PRODUCTS } from '@/lib/data';
 import { getStoredProducts } from '@/lib/api';
 import ProductCard from './ProductCard';
+import gsap from 'gsap';
+import { animateSectionReveal, animateStaggeredCards } from '@/lib/animations';
 
 export default function Bestsellers() {
   const [products, setProducts] = useState(PRODUCTS);
+  const sectionRef = useRef<HTMLElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setProducts(getStoredProducts());
@@ -17,10 +21,20 @@ export default function Bestsellers() {
     return () => window.removeEventListener('jotg_products_updated', onUpdate);
   }, []);
 
+  // GSAP ScrollTrigger Animation
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      animateSectionReveal(sectionRef.current);
+      animateStaggeredCards(gridRef.current);
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, [products]);
+
   const bestsellers = products.filter((p) => p.isBestseller && p.isActive !== false).slice(0, 4);
 
   return (
-    <section className="py-20 bg-[#090F21]">
+    <section ref={sectionRef} className="py-20 bg-[#090F21]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
           <div>
@@ -45,7 +59,7 @@ export default function Bestsellers() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {bestsellers.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

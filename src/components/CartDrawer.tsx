@@ -1,37 +1,96 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { X, Trash2, ArrowRight, ShoppingBag, ShieldCheck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { formatBDT } from '@/lib/currency';
+import gsap from 'gsap';
+import { prefersReducedMotion } from '@/lib/animations';
 
 export default function CartDrawer() {
   const { items, isCartOpen, setIsCartOpen, removeItem, updateQuantity, subtotalMinor } = useCart();
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  // Keyboard navigation & body scroll lock
+  useEffect(() => {
+    if (!isCartOpen) return;
+
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsCartOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isCartOpen, setIsCartOpen]);
+
+  // Entrance GSAP animation
+  useEffect(() => {
+    if (isCartOpen && drawerRef.current && backdropRef.current && !prefersReducedMotion()) {
+      const ctx = gsap.context(() => {
+        gsap.fromTo(
+          backdropRef.current,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.3, ease: 'power2.out' }
+        );
+        gsap.fromTo(
+          drawerRef.current,
+          { x: '100%' },
+          { x: '0%', duration: 0.4, ease: 'power3.out' }
+        );
+      });
+      return () => ctx.revert();
+    }
+  }, [isCartOpen]);
 
   if (!isCartOpen) return null;
+
+  const handleClose = () => {
+    if (prefersReducedMotion() || !drawerRef.current || !backdropRef.current) {
+      setIsCartOpen(false);
+      return;
+    }
+    gsap.to(backdropRef.current, { opacity: 0, duration: 0.25, ease: 'power2.in' });
+    gsap.to(drawerRef.current, {
+      x: '100%',
+      duration: 0.3,
+      ease: 'power3.in',
+      onComplete: () => setIsCartOpen(false),
+    });
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
-        onClick={() => setIsCartOpen(false)}
-      ></div>
+        ref={backdropRef}
+        className="absolute inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
+        onClick={handleClose}
+      />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-[#090F21] border-l border-[#1E3368] text-white flex flex-col shadow-2xl">
+        <div
+          ref={drawerRef}
+          className="w-screen max-w-md bg-[#090F21] border-l border-[#1E3368] text-white flex flex-col shadow-2xl"
+        >
           {/* Header */}
           <div className="p-4 sm:p-6 border-b border-[#1E3368] flex items-center justify-between bg-[#101D40]">
             <div className="flex items-center gap-2">
               <ShoppingBag className="w-5 h-5 text-[#F5E8C9]" />
-              <h2 className="text-base font-black tracking-widest uppercase text-white">
-                YOUR MATCHDAY BAG ({items.reduce((acc, i) => acc + i.quantity, 0)})
+              <h2 className="text-base font-black tracking-widest uppercase text-white font-mono">
+                MATCHDAY BAG ({items.reduce((acc, i) => acc + i.quantity, 0)})
               </h2>
             </div>
             <button
-              onClick={() => setIsCartOpen(false)}
+              onClick={handleClose}
               className="text-slate-400 hover:text-white p-1 rounded-md"
               aria-label="Close cart"
             >
@@ -54,8 +113,8 @@ export default function CartDrawer() {
                 </p>
                 <Link
                   href="/products"
-                  onClick={() => setIsCartOpen(false)}
-                  className="px-6 py-2.5 bg-[#176B43] hover:bg-[#1FA365] text-white font-bold text-xs uppercase tracking-wider rounded-md inline-block shadow-md hover:scale-105 transition-all"
+                  onClick={handleClose}
+                  className="px-6 py-2.5 bg-[#176B43] hover:bg-[#1FA365] text-white font-bold text-xs uppercase tracking-wider rounded-md inline-block shadow-md hover:scale-105 active:scale-95 transition-all"
                 >
                   Explore Kits
                 </Link>
@@ -66,7 +125,7 @@ export default function CartDrawer() {
                 return (
                   <div
                     key={`${item.variantId}_${itemKeySuffix}`}
-                    className="flex gap-4 p-3 rounded-lg bg-[#101D40]/60 border border-[#1E3368]"
+                    className="flex gap-4 p-3 rounded-lg bg-[#101D40]/60 border border-[#1E3368] hover:border-[#1E3368]/90 transition-colors"
                   >
                     <div className="relative w-20 h-24 rounded overflow-hidden bg-[#090F21] flex-shrink-0">
                       <Image
@@ -92,7 +151,7 @@ export default function CartDrawer() {
                           </button>
                         </div>
 
-                        <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
+                        <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400 font-mono">
                           <span className="font-bold text-[#F5E8C9]">Size: {item.size}</span>
                           <span>•</span>
                           <span>{item.editionType}</span>
@@ -100,10 +159,10 @@ export default function CartDrawer() {
 
                         {/* Customization Details preview */}
                         {item.customization?.playerName && (
-                          <div className="mt-1.5 p-1.5 bg-[#090F21] rounded text-[10px] text-[#F5E8C9] border border-[#1E3368]/60">
+                          <div className="mt-1.5 p-1.5 bg-[#090F21] rounded text-[10px] text-[#F5E8C9] border border-[#1E3368]/60 font-mono">
                             <span className="font-bold">Custom:</span> #{item.customization.playerNumber || ''} {item.customization.playerName}
                             {item.customization.sleevePatch && (
-                              <span className="block text-slate-400">Patch: {item.customization.sleevePatch}</span>
+                              <span className="block text-slate-400 font-sans">Patch: {item.customization.sleevePatch}</span>
                             )}
                           </div>
                         )}
@@ -117,7 +176,7 @@ export default function CartDrawer() {
                           >
                             -
                           </button>
-                          <span className="px-2 py-0.5 text-xs font-bold text-white">
+                          <span className="px-2 py-0.5 text-xs font-bold text-white font-mono">
                             {item.quantity}
                           </span>
                           <button
@@ -128,7 +187,7 @@ export default function CartDrawer() {
                           </button>
                         </div>
 
-                        <span className="text-xs font-black text-[#F5E8C9]">
+                        <span className="text-xs font-black text-[#F5E8C9] font-mono">
                           {formatBDT(
                             (item.unitPriceMinor + (item.customization?.customizationFeeMinor || 0)) *
                               item.quantity
@@ -145,7 +204,7 @@ export default function CartDrawer() {
           {/* Footer Checkout Summary */}
           {items.length > 0 && (
             <div className="p-4 sm:p-6 border-t border-[#1E3368] bg-[#101D40]/90 space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between font-mono">
                 <span className="text-xs uppercase font-bold text-slate-300 tracking-wider">
                   Bag Subtotal
                 </span>
@@ -161,8 +220,8 @@ export default function CartDrawer() {
 
               <Link
                 href="/checkout"
-                onClick={() => setIsCartOpen(false)}
-                className="w-full inline-flex items-center justify-center gap-2 py-3.5 bg-[#176B43] hover:bg-[#1FA365] text-white font-black text-xs sm:text-sm uppercase tracking-widest rounded-md shadow-lg shadow-[#176B43]/30 transition-all hover:scale-[1.02]"
+                onClick={handleClose}
+                className="w-full inline-flex items-center justify-center gap-2 py-3.5 bg-[#176B43] hover:bg-[#1FA365] text-white font-black text-xs sm:text-sm uppercase tracking-widest rounded-md shadow-lg shadow-[#176B43]/30 transition-all hover:scale-[1.02] active:scale-95"
               >
                 <span>PROCEED TO CHECKOUT</span>
                 <ArrowRight className="w-4 h-4" />

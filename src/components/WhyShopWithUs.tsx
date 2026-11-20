@@ -1,9 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ShieldCheck, Ruler, Truck, Banknote, Smartphone, Award } from 'lucide-react';
+import gsap from 'gsap';
+import { animateSectionReveal } from '@/lib/animations';
 
 export default function WhyShopWithUs() {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      animateSectionReveal(sectionRef.current);
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
   const benefits = [
     {
       icon: Award,
@@ -38,7 +49,7 @@ export default function WhyShopWithUs() {
   ];
 
   return (
-    <section className="py-20 bg-[#101D40]/60 border-t border-[#1E3368]">
+    <section ref={sectionRef} className="py-20 bg-[#101D40]/60 border-t border-[#1E3368]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <span className="text-xs font-bold uppercase tracking-widest text-[#176B43]">

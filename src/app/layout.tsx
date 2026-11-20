@@ -1,23 +1,11 @@
 import type { Metadata } from 'next';
-import { Inter, Oswald } from 'next/font/google';
+import { Suspense } from 'react';
 import './globals.css';
 import { CartProvider } from '@/context/CartContext';
 import AnnouncementBar from '@/components/AnnouncementBar';
 import Header from '@/components/Header';
 import CartDrawer from '@/components/CartDrawer';
 import Footer from '@/components/Footer';
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
-const oswald = Oswald({
-  subsets: ['latin'],
-  variable: '--font-oswald',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://jerseyonthego.com'),
@@ -41,11 +29,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${oswald.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className="h-full antialiased font-sans">
       <body suppressHydrationWarning className="min-h-full flex flex-col bg-[#090F21] text-[#F5E8C9]">
         <CartProvider>
           <AnnouncementBar />
-          <Header />
+          <Suspense fallback={null}>
+            <Header />
+          </Suspense>
           <main className="flex-1">{children}</main>
           <CartDrawer />
           <Footer />

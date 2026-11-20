@@ -1,12 +1,14 @@
 'use client';
 
-import React, { Suspense, useState, useMemo, useEffect } from 'react';
+import React, { Suspense, useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Filter, SlidersHorizontal, Search, X, Sparkles } from 'lucide-react';
 import { PRODUCTS, CATEGORIES, COLLECTIONS } from '@/lib/data';
 import { getStoredProducts, getProductsApi } from '@/lib/api';
 import { Product } from '@/types';
 import ProductCard from '@/components/ProductCard';
+import gsap from 'gsap';
+import { animateStaggeredCards } from '@/lib/animations';
 
 function ProductsContent() {
   const router = useRouter();
@@ -24,6 +26,15 @@ function ProductsContent() {
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'newest'>('featured');
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const productsGridRef = useRef<HTMLDivElement>(null);
+
+  // Sync state with search params when navigating from navbar
+  useEffect(() => {
+    setSelectedCategory(searchParams.get('category') || 'all');
+    setSelectedCollection(searchParams.get('collection') || 'all');
+    setActiveFilter(searchParams.get('filter') || 'all');
+    setSearchQuery(searchParams.get('search') || '');
+  }, [searchParams]);
 
   useEffect(() => {
     setProductsList(getStoredProducts());
@@ -37,6 +48,13 @@ function ProductsContent() {
     window.addEventListener('jotg_products_updated', handleUpdate);
     return () => window.removeEventListener('jotg_products_updated', handleUpdate);
   }, []);
+
+  // Staggered GSAP reveal for filtered product cards
+  useEffect(() => {
+    if (productsGridRef.current) {
+      animateStaggeredCards(productsGridRef.current);
+    }
+  }, [selectedCategory, selectedCollection, selectedEdition, searchQuery, sortBy, activeFilter]);
 
   // Filter products
   const filteredProducts = useMemo(() => {
@@ -312,7 +330,7 @@ function ProductsContent() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div ref={productsGridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

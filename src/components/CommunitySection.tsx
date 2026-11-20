@@ -1,10 +1,43 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { ArrowUpRight } from 'lucide-react';
+import gsap from 'gsap';
+import { animateSectionReveal } from '@/lib/animations';
 
 export default function CommunitySection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      animateSectionReveal(sectionRef.current);
+      if (gridRef.current) {
+        const posts = gridRef.current.querySelectorAll('[data-social-post]');
+        gsap.fromTo(
+          posts,
+          { y: 30, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.65,
+            stagger: 0.1,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: gridRef.current,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+              once: true,
+            },
+          }
+        );
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   const socialPosts = [
     {
       handle: '@jerseyonthego',
@@ -29,7 +62,7 @@ export default function CommunitySection() {
   ];
 
   return (
-    <section className="py-20 bg-[#090F21] border-t border-[#1E3368]">
+    <section ref={sectionRef} className="py-20 bg-[#090F21] border-t border-[#1E3368]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
           <div>
@@ -40,45 +73,44 @@ export default function CommunitySection() {
               <span>@JERSEYONTHEGO</span>
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-white">
-              SEEN ON <span className="text-[#F5E8C9]">THE GO.</span>
+              MATCHDAY ON <span className="text-[#F5E8C9]">THE STREETS</span>
             </h2>
             <p className="text-sm text-slate-400 mt-2 font-light">
-              Show us how you wear your colours.
+              Tag @jerseyonthego to be featured wearing your colours.
             </p>
           </div>
 
           <a
-            href="https://instagram.com/jerseyonthego"
+            href="https://instagram.com"
             target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-[#F5E8C9] hover:text-white transition-colors"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#F5E8C9] hover:text-white transition-colors"
           >
-            <span>JOIN OUR COMMUNITY</span>
+            <span>FOLLOW US ON INSTAGRAM</span>
             <ArrowUpRight className="w-4 h-4" />
           </a>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {socialPosts.map((post, idx) => (
-            <a
-              key={idx}
-              href="https://instagram.com/jerseyonthego"
-              target="_blank"
-              rel="noreferrer"
-              className="group relative rounded-xl overflow-hidden aspect-square bg-[#101D40] border border-[#1E3368] hover:border-[#F5E8C9] transition-all"
+        <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {socialPosts.map((post, index) => (
+            <div
+              key={index}
+              data-social-post
+              className="group relative rounded-xl overflow-hidden aspect-square card-stadium border border-[#1E3368] hover:border-[#F5E8C9]/40 transition-all duration-300 hover:-translate-y-1"
             >
               <Image
                 src={post.image}
                 alt={post.caption}
                 fill
-                sizes="(max-width: 640px) 50vw, 25vw"
-                className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-80 group-hover:brightness-95"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                className="object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end">
-                <span className="text-[10px] font-bold text-[#F5E8C9]">{post.handle}</span>
-                <p className="text-[11px] text-white font-medium line-clamp-1">{post.caption}</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#090F21] via-transparent to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
+              <div className="absolute bottom-0 inset-x-0 p-4">
+                <span className="text-xs font-bold text-[#F5E8C9] block">{post.handle}</span>
+                <p className="text-xs text-slate-300 mt-1 line-clamp-1">{post.caption}</p>
               </div>
-            </a>
+            </div>
           ))}
         </div>
       </div>

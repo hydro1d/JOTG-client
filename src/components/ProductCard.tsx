@@ -1,17 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ShoppingBag, Check, Sparkles } from 'lucide-react';
 import { Product } from '@/types';
 import { formatBDT } from '@/lib/currency';
 import { useCart } from '@/context/CartContext';
+import { animateAddToCartSuccess } from '@/lib/animations';
 
 export default function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
   const [selectedSize, setSelectedSize] = useState<string>(product.variants[0]?.size || 'M');
   const [added, setAdded] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   const primaryImage =
     product.images.find((img) => img.isPrimary)?.imageUrl ||
@@ -41,12 +43,16 @@ export default function ProductCard({ product }: { product: Product }) {
       quantity: 1,
     });
 
+    animateAddToCartSuccess(btnRef.current);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
 
   return (
-    <div className="group card-stadium rounded-xl overflow-hidden flex flex-col h-full relative">
+    <div
+      data-product-card
+      className="group card-stadium rounded-xl overflow-hidden flex flex-col h-full relative transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#176B43]/15 border border-[#1E3368] hover:border-[#F5E8C9]/40"
+    >
       {/* Product Image Container */}
       <Link href={`/products/${product.slug}`} className="relative block aspect-[4/5] overflow-hidden bg-[#101D40]">
         <Image
@@ -54,7 +60,7 @@ export default function ProductCard({ product }: { product: Product }) {
           alt={product.title}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          className="object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
+          className="object-cover object-center group-hover:scale-108 transition-transform duration-700 ease-out"
         />
 
         {/* Edition & Status Badges */}
@@ -109,11 +115,11 @@ export default function ProductCard({ product }: { product: Product }) {
               <button
                 key={variant.id}
                 onClick={() => setSelectedSize(variant.size)}
-                className={`text-[10px] font-bold px-2 py-1 rounded transition-colors ${
+                className={`text-[10px] font-bold px-2 py-1 rounded transition-all active:scale-95 ${
                   selectedSize === variant.size
-                    ? 'bg-[#F5E8C9] text-[#101D40]'
+                    ? 'bg-[#F5E8C9] text-[#101D40] shadow-sm'
                     : 'bg-[#101D40] text-slate-300 hover:bg-[#1E3368]'
-                } ${variant.stockQuantity === 0 ? 'opacity-40 line-through' : ''}`}
+                } ${variant.stockQuantity === 0 ? 'opacity-40 line-through cursor-not-allowed' : ''}`}
                 disabled={variant.stockQuantity === 0}
               >
                 {variant.size}
@@ -126,11 +132,11 @@ export default function ProductCard({ product }: { product: Product }) {
         <div className="mt-4 pt-3 border-t border-[#1E3368] flex items-center justify-between">
           <div>
             <div className="flex items-baseline gap-2">
-              <span className="text-base sm:text-lg font-black text-white">
+              <span className="text-base sm:text-lg font-black text-white font-mono">
                 {formatBDT(currentPrice)}
               </span>
               {hasDiscount && (
-                <span className="text-xs text-slate-400 line-through">
+                <span className="text-xs text-slate-400 line-through font-mono">
                   {formatBDT(product.regularPriceMinor)}
                 </span>
               )}
@@ -139,13 +145,14 @@ export default function ProductCard({ product }: { product: Product }) {
           </div>
 
           <button
+            ref={btnRef}
             onClick={handleQuickAdd}
             disabled={!inStock}
             className={`p-2.5 rounded-lg font-bold transition-all duration-200 ${
               added
-                ? 'bg-[#176B43] text-white scale-95'
+                ? 'bg-[#176B43] text-white scale-95 shadow-lg shadow-[#176B43]/50'
                 : inStock
-                ? 'bg-[#15244E] hover:bg-[#176B43] text-[#F5E8C9] hover:text-white border border-[#1E3368] hover:border-transparent'
+                ? 'bg-[#15244E] hover:bg-[#176B43] text-[#F5E8C9] hover:text-white border border-[#1E3368] hover:border-transparent active:scale-90'
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed'
             }`}
             title={inStock ? 'Quick Add to Bag' : 'Out of Stock'}
